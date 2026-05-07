@@ -86,6 +86,10 @@ public:
     // xác định vị trí đặt dấu thanh (index trong amChinh sau khi build vần)
     // implementation sẽ phụ thuộc rule bạn mô tả
     int tonePosition() const noexcept;
+    // ---- comparison operators ----
+    bool operator==(const Syllable& other) const;
+    bool operator!=(const Syllable& other) const;
+    bool operator<(const Syllable& other) const;
 
 private:
     // =========================
@@ -139,6 +143,7 @@ private:
 class vin {
 public:
     explicit vin(std::istream& is) : is_(is) {}
+    inline explicit operator bool() const {return !is_.fail();}
 
     vin& operator>>(Syllable& s);
 

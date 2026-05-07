@@ -621,6 +621,42 @@ std::string Syllable::applyTone(const std::string& input, Tone tone, int pos) {
     return normalizeNFC(unicodeStringToUTF8(result));
 }
 
+// ==========================================
+// Comparison Operators Implementation
+// ==========================================
+
+/**
+ * So sánh bằng: Kiểm tra tất cả thành phần cấu tạo của âm tiết.
+ * Cần thiết cho các phép so sánh cụm từ (vector<Syllable>).
+ */
+bool Syllable::operator==(const Syllable& other) const {
+    return tone_ == other.tone_ &&
+           phuAmDau_ == other.phuAmDau_ &&
+           amDem_ == other.amDem_ &&
+           amChinh_ == other.amChinh_ &&
+           amCuoi_ == other.amCuoi_;
+}
+
+/**
+ * So sánh không bằng.
+ */
+bool Syllable::operator!=(const Syllable& other) const {
+    return !(*this == other);
+}
+
+/**
+ * So sánh nhỏ hơn: Cần thiết để Syllable (hoặc vector chứa nó) 
+ * có thể làm Key trong std::set hoặc std::map.
+ * Thứ tự ưu tiên: Phụ âm đầu -> Âm đệm -> Âm chính -> Âm cuối -> Thanh điệu.
+ */
+bool Syllable::operator<(const Syllable& other) const {
+    if (phuAmDau_ != other.phuAmDau_) return phuAmDau_ < other.phuAmDau_;
+    if (amDem_ != other.amDem_)       return amDem_ < other.amDem_;
+    if (amChinh_ != other.amChinh_)   return amChinh_ < other.amChinh_;
+    if (amCuoi_ != other.amCuoi_)     return amCuoi_ < other.amCuoi_;
+    return static_cast<uint8_t>(tone_) < static_cast<uint8_t>(other.tone_);
+}
+
 // ============================================================
 // IO wrapper
 // ============================================================
