@@ -262,7 +262,7 @@ std::pair<std::string, std::string> splitInitialAndVan(const std::string& noTone
 
 bool shouldUseSoftInitial(const std::string& next) {
     return startsWith(next, "i") || startsWith(next, "e") ||
-           startsWith(next, "ê") || startsWith(next, "ia");
+           startsWith(next, "ê");
 }
 
 OrthographicSegments buildOrthographicSegmentsFromNormalized(
@@ -321,7 +321,9 @@ OrthographicSegments buildOrthographicSegmentsFromNormalized(
     }
 
     // 4. Fix âm đệm o -> u nếu âm chính bắt đầu i/ê
-    if (seg.medial == "o" && (startsWith(seg.nucleus, "i") || startsWith(seg.nucleus, "ê"))) {
+    if (seg.medial == "o" && (startsWith(seg.nucleus, "i")
+                            || startsWith(seg.nucleus, "ê")
+                            ||startsWith(seg.nucleus, "â"))) {
         seg.medial = "u";
     }
 
