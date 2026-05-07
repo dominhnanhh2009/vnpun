@@ -1,3 +1,4 @@
+// file: Syllable.cpp
 #include "Syllable.h"
 
 #include <algorithm>
@@ -36,15 +37,12 @@ std::string unicodeStringToUTF8(const icu::UnicodeString& us) {
 
 int utf8CodePointLength(const std::string& s) {
     icu::UnicodeString us = icu::UnicodeString::fromUTF8(icu::StringPiece(s));
-
     int count = 0;
-
     for (int32_t i = 0; i < us.length();) {
         UChar32 c = us.char32At(i);
         i += U16_LENGTH(c);
         ++count;
     }
-
     return count;
 }
 
@@ -88,124 +86,34 @@ UChar32 combiningMarkFromTone(Tone tone) {
 // ============================================================
 
 const std::vector<std::string> VALID_PHU_AM_DAU = {
-    "",
-    "b",
-    "c",
-    "ch",
-    "d",
-    "đ",
-    "g",
-    "gi",
-    "h",
-    "kh",
-    "l",
-    "m",
-    "n",
-    "ng",
-    "nh",
-    "p",
-    "ph",
-    "r",
-    "s",
-    "t",
-    "th",
-    "tr",
-    "v",
-    "x"
+    "", "b", "c", "ch", "d", "đ", "g", "gi", "h", "kh", "l", "m", 
+    "n", "ng", "nh", "p", "ph", "r", "s", "t", "th", "tr", "v", "x"
 };
 
 const std::vector<std::string> VALID_AM_DEM = {
-    "",
-    "o"
+    "", "o"
 };
 
 const std::vector<std::string> VALID_AM_CHINH = {
-    "a",
-    "ă",
-    "â",
-    "e",
-    "ê",
-    "i",
-    "o",
-    "ô",
-    "ơ",
-    "u",
-    "ư",
-    "ia",
-    "ua",
-    "ưa"
+    "a", "ă", "â", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", 
+    "ia", "ua", "ưa"
 };
 
 const std::vector<std::string> VALID_AM_CUOI = {
-    "",
-    "c",
-    "ch",
-    "m",
-    "n",
-    "ng",
-    "nh",
-    "p",
-    "t",
-    "i",
-    "y",
-    "o",
-    "u"
+    "", "c", "ch", "m", "n", "ng", "nh", "p", "t", "i", "y", "o", "u"
 };
 
-// Phụ âm đầu dạng chính tả.
-// Dài trước ngắn.
+// Phụ âm đầu dạng chính tả. (Dài xếp trước ngắn)
 const std::vector<std::string> INITIAL_CANDIDATES = {
-    "ngh",
-    "gh",
-    "ng",
-    "nh",
-    "ch",
-    "tr",
-    "th",
-    "ph",
-    "kh",
-    "gi",
-    "b",
-    "c",
-    "d",
-    "đ",
-    "g",
-    "h",
-    "k",
-    "l",
-    "m",
-    "n",
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "v",
-    "x"
+    "ngh", "gh", "ng", "nh", "ch", "tr", "th", "ph", "kh", "gi", 
+    "b", "c", "d", "đ", "g", "h", "k", "l", "m", "n", "p", "q", 
+    "r", "s", "t", "v", "x"
 };
 
-// Âm chính dạng chính tả.
-// Dài trước ngắn để bảo toàn atomic.
+// Âm chính dạng chính tả. (Dài xếp trước ngắn để bảo toàn atomic)
 const std::vector<std::string> NUCLEUS_CANDIDATES = {
-    "iê",
-    "yê",
-    "uô",
-    "ươ",
-    "ia",
-    "ua",
-    "ưa",
-    "ă",
-    "â",
-    "ê",
-    "ô",
-    "ơ",
-    "ư",
-    "a",
-    "e",
-    "i",
-    "y",
-    "o",
-    "u"
+    "iê", "yê", "uô", "ươ", "ia", "ua", "ưa", 
+    "ă", "â", "ê", "ô", "ơ", "ư", "a", "e", "i", "y", "o", "u"
 };
 
 struct ParsedVan {
@@ -232,17 +140,6 @@ bool isValidFinalRaw(const std::string& s) {
 // ============================================================
 // Parse vần
 // ============================================================
-//
-// Yêu cầu:
-// - "ua" always atomic.
-// - "ui": u là âm chính, i là âm cuối.
-// - "uy": u là âm đệm, y là âm chính.
-// - "uô" là âm chính ua.
-// - "ươ" là âm chính ưa.
-// - "iê/yê" là âm chính ia.
-// - "uya" như khuya: u là âm đệm, ia là âm chính.
-// - "uơ" như thuở: âm chính ưa.
-// ============================================================
 
 std::optional<ParsedVan> parseVanNormal(const std::string& van) {
     if (van.empty()) {
@@ -252,109 +149,64 @@ std::optional<ParsedVan> parseVanNormal(const std::string& van) {
     // "ua" luôn atomic.
     if (startsWith(van, "ua")) {
         std::string right = van.substr(std::string("ua").size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"", "ua", right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"", "ua", right};
     }
 
     // "uô" -> âm chính ua.
     if (startsWith(van, "uô")) {
         std::string right = van.substr(std::string("uô").size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"", "uô", right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"", "uô", right};
     }
 
     // "ươ" -> âm chính ưa.
     if (startsWith(van, "ươ")) {
         std::string right = van.substr(std::string("ươ").size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"", "ươ", right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"", "ươ", right};
     }
 
-    // "uơ" cũng coi là dạng chính tả của âm chính ưa.
-    // thuở -> th + "" + ưa + ""
+    // "uơ" dạng chính tả của âm chính ưa (thuở).
     if (startsWith(van, "uơ")) {
         std::string right = van.substr(std::string("uơ").size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"", "ưa", right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"", "ưa", right};
     }
 
     // "ui": u là âm chính, i là âm cuối.
     if (startsWith(van, "ui")) {
         std::string right = van.substr(std::string("u").size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"", "u", right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"", "u", right};
     }
 
     // "uya": u là âm đệm, ia là âm chính.
-    // khuya -> kh + u + ia + ""
     if (startsWith(van, "uya")) {
         std::string right = van.substr(std::string("uya").size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"u", "ia", right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"u", "ia", right};
     }
 
     // "uy": u là âm đệm, y/yê là âm chính.
-    // thuỷ -> th + u + y.
-    // duyệt -> d + u + yê + t.
     if (startsWith(van, "uy")) {
         std::string rest = van.substr(std::string("u").size());
-
         for (const std::string& nucleus : NUCLEUS_CANDIDATES) {
-            if (!startsWith(rest, nucleus)) {
-                continue;
-            }
-
+            if (!startsWith(rest, nucleus)) continue;
             std::string right = rest.substr(nucleus.size());
-
-            if (isValidFinalRaw(right)) {
-                return ParsedVan{"u", nucleus, right};
-            }
+            if (isValidFinalRaw(right)) return ParsedVan{"u", nucleus, right};
         }
     }
 
     // Không có âm đệm.
     for (const std::string& nucleus : NUCLEUS_CANDIDATES) {
-        if (!startsWith(van, nucleus)) {
-            continue;
-        }
-
+        if (!startsWith(van, nucleus)) continue;
         std::string right = van.substr(nucleus.size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"", nucleus, right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"", nucleus, right};
     }
 
     // Có âm đệm o/u.
     for (const std::string& medial : std::vector<std::string>{"o", "u"}) {
-        if (!startsWith(van, medial)) {
-            continue;
-        }
-
+        if (!startsWith(van, medial)) continue;
         std::string rest = van.substr(medial.size());
-
         for (const std::string& nucleus : NUCLEUS_CANDIDATES) {
-            if (!startsWith(rest, nucleus)) {
-                continue;
-            }
-
+            if (!startsWith(rest, nucleus)) continue;
             std::string right = rest.substr(nucleus.size());
-
-            if (isValidFinalRaw(right)) {
-                return ParsedVan{medial, nucleus, right};
-            }
+            if (isValidFinalRaw(right)) return ParsedVan{medial, nucleus, right};
         }
     }
 
@@ -364,57 +216,32 @@ std::optional<ParsedVan> parseVanNormal(const std::string& van) {
 // ============================================================
 // Pattern q
 // ============================================================
-//
-// qu      -> invalid vì không có âm chính.
-// quả     -> q + u + a      -> c + o + a
-// quốc    -> q + uô + c     -> c + o + ua + c
-// quyển   -> q + uyê + n    -> c + o + ia + n
-// quỷ     -> q + uy         -> c + o + i
-// ============================================================
 
 std::optional<ParsedVan> parseVanWithQPattern(const std::string& van) {
-    if (van.empty()) {
-        return std::nullopt;
+    if (van.empty() || van == "u") {
+        return std::nullopt; // "qu" không có âm chính
     }
 
-    // "qu" không có âm chính thật sự.
-    if (van == "u") {
-        return std::nullopt;
-    }
-
-    // quốc:
-    // q + uôc -> internal c + o + ua + c.
+    // quốc: q + uôc
     if (startsWith(van, "uô")) {
         std::string right = van.substr(std::string("uô").size());
-
-        if (isValidFinalRaw(right)) {
-            return ParsedVan{"u", "uô", right};
-        }
+        if (isValidFinalRaw(right)) return ParsedVan{"u", "uô", right};
     }
 
     // quyển, quỷ, quyền...
     if (startsWith(van, "uy")) {
         std::string rest = van.substr(std::string("u").size());
-
         for (const std::string& nucleus : NUCLEUS_CANDIDATES) {
-            if (!startsWith(rest, nucleus)) {
-                continue;
-            }
-
+            if (!startsWith(rest, nucleus)) continue;
             std::string right = rest.substr(nucleus.size());
-
-            if (isValidFinalRaw(right)) {
-                return ParsedVan{"u", nucleus, right};
-            }
+            if (isValidFinalRaw(right)) return ParsedVan{"u", nucleus, right};
         }
     }
 
-    // quả, quảng, quậy...
+    // quả, quảng...
     if (startsWith(van, "u")) {
         std::string afterU = van.substr(std::string("u").size());
-
         auto parsed = parseVanNormal(afterU);
-
         if (parsed && parsed->amDem.empty()) {
             parsed->amDem = "u";
             return parsed;
@@ -430,7 +257,6 @@ std::pair<std::string, std::string> splitInitialAndVan(const std::string& noTone
             return {initial, noTone.substr(initial.size())};
         }
     }
-
     return {"", noTone};
 }
 
@@ -439,10 +265,8 @@ std::pair<std::string, std::string> splitInitialAndVan(const std::string& noTone
 // ============================================================
 
 bool shouldUseSoftInitial(const std::string& next) {
-    return startsWith(next, "i") ||
-           startsWith(next, "e") ||
-           startsWith(next, "ê") ||
-           startsWith(next, "ia");
+    return startsWith(next, "i") || startsWith(next, "e") ||
+           startsWith(next, "ê") || startsWith(next, "ia");
 }
 
 OrthographicSegments buildOrthographicSegmentsFromNormalized(
@@ -457,99 +281,42 @@ OrthographicSegments buildOrthographicSegmentsFromNormalized(
     seg.nucleus = amChinh;
     seg.final   = amCuoi;
 
-    // ------------------------------------------------------------
-    // Special: thuở.
-    //
-    // Internal: th + "" + ưa + "".
-    // Output hợp lý: thuở.
-    // ------------------------------------------------------------
-    if (seg.initial == "th" &&
-        seg.medial.empty() &&
-        seg.nucleus == "ưa" &&
-        seg.final.empty()) {
+    // Special case: thuở (th + "" + ưa + "")
+    if (seg.initial == "th" && seg.medial.empty() &&
+        seg.nucleus == "ưa" && seg.final.empty()) {
         seg.nucleus = "uơ";
         return seg;
     }
 
-    // ------------------------------------------------------------
-    // q-pattern khi xuất.
-    //
-    // quốc internal từ parser q-pattern:
-    //   c + o + ua + c
-    //
-    // cuốc internal:
-    //   c + "" + ua + c
-    //
-    // Vì vậy chỉ c + o + ua + c mới xuất quốc.
-    // ------------------------------------------------------------
-    if (seg.initial == "c" &&
-        seg.medial == "o" &&
-        seg.nucleus == "ua" &&
-        seg.final == "c") {
-        seg.initial = "q";
-        seg.medial = "";
-        seg.nucleus = "uô";
-        return seg;
+    // Q-pattern khi xuất
+    if (seg.initial == "c" && seg.medial == "o" && seg.nucleus == "ua" && seg.final == "c") {
+        seg.initial = "q"; seg.medial = ""; seg.nucleus = "uô"; return seg;
     }
-
-    if (seg.initial == "c" &&
-        seg.medial == "o" &&
-        seg.nucleus == "a" &&
-        seg.final == "c") {
-        seg.initial = "q";
-        seg.medial = "";
-        seg.nucleus = "uô";
-        return seg;
+    if (seg.initial == "c" && seg.medial == "o" && seg.nucleus == "a" && seg.final == "c") {
+        seg.initial = "q"; seg.medial = ""; seg.nucleus = "uô"; return seg;
     }
-
-    // c + o + ... thường xuất qu...
-    // quả, quảng, quỷ, quyên...
     if (seg.initial == "c" && seg.medial == "o") {
-        seg.initial = "q";
-        seg.medial = "u";
+        seg.initial = "q"; seg.medial = "u";
     }
 
-    // ------------------------------------------------------------
-    // 1. convert c -> k, ng -> ngh, g -> gh
-    // nếu phần theo sau bắt đầu bằng i/e/ê/ia.
-    // ------------------------------------------------------------
+    // 1. Convert c -> k, ng -> ngh, g -> gh
     {
         std::string next = !seg.medial.empty() ? seg.medial : seg.nucleus;
-
-        if (seg.initial == "c" && shouldUseSoftInitial(next)) {
-            seg.initial = "k";
-        } else if (seg.initial == "ng" && shouldUseSoftInitial(next)) {
-            seg.initial = "ngh";
-        } else if (seg.initial == "g" && shouldUseSoftInitial(next)) {
-            seg.initial = "gh";
-        }
+        if (seg.initial == "c" && shouldUseSoftInitial(next)) seg.initial = "k";
+        else if (seg.initial == "ng" && shouldUseSoftInitial(next)) seg.initial = "ngh";
+        else if (seg.initial == "g" && shouldUseSoftInitial(next)) seg.initial = "gh";
     }
 
-    // ------------------------------------------------------------
-    // 2. nếu có âm cuối:
-    // ia -> iê
-    // ua -> uô
-    // ưa -> ươ
-    // ------------------------------------------------------------
+    // 2. ia -> iê, ua -> uô, ưa -> ươ khi có âm cuối
     if (!seg.final.empty()) {
-        if (seg.nucleus == "ia") {
-            seg.nucleus = "iê";
-        } else if (seg.nucleus == "ua") {
-            seg.nucleus = "uô";
-        } else if (seg.nucleus == "ưa") {
-            seg.nucleus = "ươ";
-        }
+        if (seg.nucleus == "ia") seg.nucleus = "iê";
+        else if (seg.nucleus == "ua") seg.nucleus = "uô";
+        else if (seg.nucleus == "ưa") seg.nucleus = "ươ";
     }
 
-    // ------------------------------------------------------------
-    // 3. fix bỏ 1 chữ i khi phụ âm đầu là gi và phần sau bắt đầu i.
-    // Phải làm sau bước ia -> iê.
-    //
-    // gi + iêng -> giêng.
-    // ------------------------------------------------------------
+    // 3. Giữ 1 chữ i sau `gi`
     {
         std::string rest = seg.medial + seg.nucleus + seg.final;
-
         if (seg.initial == "gi" && startsWith(rest, "i")) {
             if (seg.medial.empty() && startsWith(seg.nucleus, "i")) {
                 seg.nucleus = seg.nucleus.substr(std::string("i").size());
@@ -557,63 +324,31 @@ OrthographicSegments buildOrthographicSegmentsFromNormalized(
         }
     }
 
-    // ------------------------------------------------------------
-    // 4. convert i -> y ở âm chính nếu:
-    // - không có phụ âm đầu
-    // - hoặc có âm đệm.
-    //
-    // Mở rộng:
-    // ia/iê -> ya/yê.
-    // ------------------------------------------------------------
+    // 4. i -> y ở âm chính
     if (seg.initial.empty() || !seg.medial.empty()) {
-        if (seg.nucleus == "i") {
-            seg.nucleus = "y";
-        } else if (startsWith(seg.nucleus, "i")) {
+        if (seg.nucleus == "i") seg.nucleus = "y";
+        else if (startsWith(seg.nucleus, "i")) {
             seg.nucleus = "y" + seg.nucleus.substr(std::string("i").size());
         }
     }
 
-    // ------------------------------------------------------------
-    // 5. fix âm đệm o -> u nếu âm chính bắt đầu bằng i/y.
-    //
-    // Đặt sau bước i -> y để:
-    //   ch + o + yên -> chuyện
-    //   d  + o + yêt -> duyệt
-    // ------------------------------------------------------------
-    if (seg.medial == "o" &&
-        (startsWith(seg.nucleus, "i") || startsWith(seg.nucleus, "y"))) {
+    // 5. Fix âm đệm o -> u nếu âm chính bắt đầu i/y
+    if (seg.medial == "o" && (startsWith(seg.nucleus, "i") || startsWith(seg.nucleus, "y"))) {
         seg.medial = "u";
     }
 
     return seg;
 }
 
-int toneTargetIndexInsideNucleus(
-    const std::string& orthographicNucleus,
-    const std::string& final
-) {
-    bool isDiphthong =
-        orthographicNucleus == "ia" ||
-        orthographicNucleus == "iê" ||
-        orthographicNucleus == "yê" ||
-        orthographicNucleus == "ua" ||
-        orthographicNucleus == "uô" ||
-        orthographicNucleus == "ưa" ||
-        orthographicNucleus == "ươ" ||
-        orthographicNucleus == "uơ";
+int toneTargetIndexInsideNucleus(const std::string& orthographicNucleus, const std::string& final) {
+    bool isDiphthong = 
+        orthographicNucleus == "ia" || orthographicNucleus == "iê" ||
+        orthographicNucleus == "yê" || orthographicNucleus == "ua" ||
+        orthographicNucleus == "uô" || orthographicNucleus == "ưa" ||
+        orthographicNucleus == "ươ" || orthographicNucleus == "uơ";
 
-    if (!isDiphthong) {
-        return 0;
-    }
-
-    // thuở/uở: dấu đánh vào ơ.
-    if (orthographicNucleus == "uơ") {
-        return 1;
-    }
-
-    // Nguyên âm đôi:
-    // - không có âm cuối: đánh vào ký tự trước.
-    // - có âm cuối: đánh vào ký tự thứ hai.
+    if (!isDiphthong) return 0;
+    if (orthographicNucleus == "uơ") return 1; // thuở
     return final.empty() ? 0 : 1;
 }
 
@@ -623,18 +358,13 @@ int toneTargetIndexInsideNucleus(
 // Constructor
 // ============================================================
 
-Syllable::Syllable(std::string phuAmDau,
-                   std::string amDem,
-                   std::string amChinh,
-                   std::string amCuoi,
-                   Tone tone)
+Syllable::Syllable(std::string phuAmDau, std::string amDem, std::string amChinh, std::string amCuoi, Tone tone)
     : phuAmDau_(std::move(phuAmDau)),
       amDem_(std::move(amDem)),
       amChinh_(std::move(amChinh)),
       amCuoi_(std::move(amCuoi)),
       tone_(tone) {
     normalize();
-
     if (!isValid()) {
         throw InvalidSyllable("Invalid Vietnamese syllable components");
     }
@@ -645,58 +375,33 @@ Syllable::Syllable(std::string phuAmDau,
 // ============================================================
 
 std::optional<Syllable> Syllable::fromUTF8(const std::string& input) {
-    if (input.empty()) {
-        return std::nullopt;
-    }
+    if (input.empty()) return std::nullopt;
 
     try {
         std::string s = normalizeNFC(toLowerUTF8(input));
-
         Tone tone = Tone::NGANG;
         std::string noTone = stripTone(s, tone);
 
-        if (noTone.empty()) {
-            return std::nullopt;
-        }
+        if (noTone.empty()) return std::nullopt;
 
         auto [rawInitial, rawVan] = splitInitialAndVan(noTone);
-
-        if (rawVan.empty()) {
-            return std::nullopt;
-        }
+        if (rawVan.empty()) return std::nullopt;
 
         std::optional<ParsedVan> parsedVan;
 
         if (rawInitial == "q") {
             parsedVan = parseVanWithQPattern(rawVan);
         } else if (rawInitial == "gi") {
-            // giếng/giêng:
-            // chính tả đã bỏ một chữ i sau "gi".
-            // giêng thực chất là gi + iêng.
             parsedVan = parseVanNormal("i" + rawVan);
-
-            if (!parsedVan) {
-                parsedVan = parseVanNormal(rawVan);
-            }
+            if (!parsedVan) parsedVan = parseVanNormal(rawVan);
         } else {
             parsedVan = parseVanNormal(rawVan);
         }
 
-        if (!parsedVan) {
-            return std::nullopt;
-        }
+        if (!parsedVan) return std::nullopt;
 
-        Syllable result(
-            rawInitial,
-            parsedVan->amDem,
-            parsedVan->amChinh,
-            parsedVan->amCuoi,
-            tone
-        );
-
-        if (!result.isValid()) {
-            return std::nullopt;
-        }
+        Syllable result(rawInitial, parsedVan->amDem, parsedVan->amChinh, parsedVan->amCuoi, tone);
+        if (!result.isValid()) return std::nullopt;
 
         return result;
     } catch (...) {
@@ -709,10 +414,7 @@ std::optional<Syllable> Syllable::fromUTF8(const std::string& input) {
 // ============================================================
 
 std::string Syllable::toUTF8() const {
-    if (!isValid()) {
-        throw InvalidSyllable("Cannot serialize invalid Vietnamese syllable");
-    }
-
+    if (!isValid()) throw InvalidSyllable("Cannot serialize invalid Vietnamese syllable");
     std::string noTone = applyOrthography();
     return applyToneMark(noTone);
 }
@@ -723,34 +425,22 @@ std::string Syllable::toUTF8() const {
 
 void Syllable::setPhuAmDau(const std::string& v) {
     phuAmDau_ = normalizePhuAmDau(v);
-
-    if (!isValidPhuAmDau(phuAmDau_)) {
-        throw InvalidSyllable("Invalid phuAmDau");
-    }
+    if (!isValidPhuAmDau(phuAmDau_)) throw InvalidSyllable("Invalid phuAmDau");
 }
 
 void Syllable::setAmDem(const std::string& v) {
     amDem_ = normalizeAmDem(v);
-
-    if (!isValidAmDem(amDem_)) {
-        throw InvalidSyllable("Invalid amDem");
-    }
+    if (!isValidAmDem(amDem_)) throw InvalidSyllable("Invalid amDem");
 }
 
 void Syllable::setAmChinh(const std::string& v) {
     amChinh_ = normalizeAmChinh(v);
-
-    if (!isValidAmChinh(amChinh_)) {
-        throw InvalidSyllable("Invalid amChinh");
-    }
+    if (!isValidAmChinh(amChinh_)) throw InvalidSyllable("Invalid amChinh");
 }
 
 void Syllable::setAmCuoi(const std::string& v) {
     amCuoi_ = normalizeAmCuoi(v);
-
-    if (!isValidAmCuoi(amCuoi_)) {
-        throw InvalidSyllable("Invalid amCuoi");
-    }
+    if (!isValidAmCuoi(amCuoi_)) throw InvalidSyllable("Invalid amCuoi");
 }
 
 // ============================================================
@@ -764,21 +454,10 @@ bool Syllable::isValid() const noexcept {
            isValidAmCuoi(amCuoi_);
 }
 
-bool Syllable::isValidPhuAmDau(const std::string& s) {
-    return containsString(VALID_PHU_AM_DAU, s);
-}
-
-bool Syllable::isValidAmDem(const std::string& s) {
-    return containsString(VALID_AM_DEM, s);
-}
-
-bool Syllable::isValidAmChinh(const std::string& s) {
-    return containsString(VALID_AM_CHINH, s);
-}
-
-bool Syllable::isValidAmCuoi(const std::string& s) {
-    return containsString(VALID_AM_CUOI, s);
-}
+bool Syllable::isValidPhuAmDau(const std::string& s) { return containsString(VALID_PHU_AM_DAU, s); }
+bool Syllable::isValidAmDem(const std::string& s) { return containsString(VALID_AM_DEM, s); }
+bool Syllable::isValidAmChinh(const std::string& s) { return containsString(VALID_AM_CHINH, s); }
+bool Syllable::isValidAmCuoi(const std::string& s) { return containsString(VALID_AM_CUOI, s); }
 
 // ============================================================
 // Normalize fields
@@ -790,47 +469,32 @@ void Syllable::normalize() {
     amChinh_  = normalizeAmChinh(amChinh_);
     amCuoi_   = normalizeAmCuoi(amCuoi_);
 
-    // internal form không giữ q.
-    if (phuAmDau_ == "q") {
-        phuAmDau_ = "c";
-    }
+    if (phuAmDau_ == "q") phuAmDau_ = "c";
 }
 
 std::string Syllable::normalizePhuAmDau(const std::string& input) {
     std::string s = normalizeNFC(toLowerUTF8(input));
-
     if (s == "ngh") return "ng";
     if (s == "gh")  return "g";
     if (s == "k")   return "c";
     if (s == "q")   return "c";
-
     return s;
 }
 
 std::string Syllable::normalizeAmDem(const std::string& input) {
     std::string s = normalizeNFC(toLowerUTF8(input));
-
-    if (s == "u") {
-        return "o";
-    }
-
+    if (s == "u") return "o";
     return s;
 }
 
 std::string Syllable::normalizeAmChinh(const std::string& input) {
     std::string s = normalizeNFC(toLowerUTF8(input));
+    if (startsWith(s, "y")) s = "i" + s.substr(std::string("y").size());
 
-    // y -> i ở đầu âm chính.
-    if (startsWith(s, "y")) {
-        s = "i" + s.substr(std::string("y").size());
-    }
-
-    // Nguyên âm đôi internal atomic.
     if (s == "iê") return "ia";
     if (s == "yê") return "ia";
     if (s == "uô") return "ua";
     if (s == "ươ") return "ưa";
-
     return s;
 }
 
@@ -844,14 +508,9 @@ std::string Syllable::normalizeAmCuoi(const std::string& input) {
 
 int Syllable::tonePosition() const noexcept {
     OrthographicSegments seg = buildOrthographicSegmentsFromNormalized(
-        phuAmDau_,
-        amDem_,
-        amChinh_,
-        amCuoi_
+        phuAmDau_, amDem_, amChinh_, amCuoi_
     );
-
     int posInNucleus = toneTargetIndexInsideNucleus(seg.nucleus, seg.final);
-
     return utf8CodePointLength(seg.medial) + posInNucleus;
 }
 
@@ -865,33 +524,20 @@ std::string Syllable::buildVan() const {
 
 std::string Syllable::applyOrthography() const {
     OrthographicSegments seg = buildOrthographicSegmentsFromNormalized(
-        phuAmDau_,
-        amDem_,
-        amChinh_,
-        amCuoi_
+        phuAmDau_, amDem_, amChinh_, amCuoi_
     );
-
     return seg.initial + seg.medial + seg.nucleus + seg.final;
 }
 
 std::string Syllable::applyToneMark(const std::string& syllable) const {
-    if (tone_ == Tone::NGANG) {
-        return normalizeNFC(syllable);
-    }
+    if (tone_ == Tone::NGANG) return normalizeNFC(syllable);
 
     OrthographicSegments seg = buildOrthographicSegmentsFromNormalized(
-        phuAmDau_,
-        amDem_,
-        amChinh_,
-        amCuoi_
+        phuAmDau_, amDem_, amChinh_, amCuoi_
     );
 
     int posInNucleus = toneTargetIndexInsideNucleus(seg.nucleus, seg.final);
-
-    int globalPos =
-        utf8CodePointLength(seg.initial) +
-        utf8CodePointLength(seg.medial) +
-        posInNucleus;
+    int globalPos = utf8CodePointLength(seg.initial) + utf8CodePointLength(seg.medial) + posInNucleus;
 
     return applyTone(syllable, tone_, globalPos);
 }
@@ -901,64 +547,37 @@ std::string Syllable::applyToneMark(const std::string& syllable) const {
 // ============================================================
 
 std::string Syllable::toLowerUTF8(const std::string& input) {
-    icu::UnicodeString us = icu::UnicodeString::fromUTF8(
-        icu::StringPiece(input)
-    );
-
+    icu::UnicodeString us = icu::UnicodeString::fromUTF8(icu::StringPiece(input));
     us.toLower(icu::Locale("vi"));
-
     return unicodeStringToUTF8(us);
 }
 
 std::string Syllable::normalizeNFC(const std::string& input) {
     UErrorCode status = U_ZERO_ERROR;
+    const icu::Normalizer2* nfc = icu::Normalizer2::getNFCInstance(status);
+    if (U_FAILURE(status)) return input;
 
-    const icu::Normalizer2* nfc =
-        icu::Normalizer2::getNFCInstance(status);
-
-    if (U_FAILURE(status)) {
-        return input;
-    }
-
-    icu::UnicodeString src = icu::UnicodeString::fromUTF8(
-        icu::StringPiece(input)
-    );
-
+    icu::UnicodeString src = icu::UnicodeString::fromUTF8(icu::StringPiece(input));
     icu::UnicodeString dst;
     nfc->normalize(src, dst, status);
 
-    if (U_FAILURE(status)) {
-        return input;
-    }
-
+    if (U_FAILURE(status)) return input;
     return unicodeStringToUTF8(dst);
 }
 
 std::string Syllable::stripTone(const std::string& input, Tone& outTone) {
     outTone = Tone::NGANG;
-
     UErrorCode status = U_ZERO_ERROR;
+    const icu::Normalizer2* nfd = icu::Normalizer2::getNFDInstance(status);
+    if (U_FAILURE(status)) return input;
 
-    const icu::Normalizer2* nfd =
-        icu::Normalizer2::getNFDInstance(status);
-
-    if (U_FAILURE(status)) {
-        return input;
-    }
-
-    icu::UnicodeString src = icu::UnicodeString::fromUTF8(
-        icu::StringPiece(input)
-    );
-
+    icu::UnicodeString src = icu::UnicodeString::fromUTF8(icu::StringPiece(input));
     icu::UnicodeString decomposed;
     nfd->normalize(src, decomposed, status);
 
-    if (U_FAILURE(status)) {
-        return input;
-    }
+    if (U_FAILURE(status)) return input;
 
     icu::UnicodeString removed;
-
     for (int32_t i = 0; i < decomposed.length();) {
         UChar32 c = decomposed.char32At(i);
         i += U16_LENGTH(c);
@@ -967,41 +586,22 @@ std::string Syllable::stripTone(const std::string& input, Tone& outTone) {
             outTone = toneFromCombiningMark(c);
             continue;
         }
-
-        // Giữ nguyên mọi dấu cấu tạo chữ:
-        // ê, ô, ơ, ư, ă, â...
         removed.append(c);
     }
-
     return normalizeNFC(unicodeStringToUTF8(removed));
 }
 
 std::string Syllable::applyTone(const std::string& input, Tone tone, int pos) {
-    if (tone == Tone::NGANG) {
-        return normalizeNFC(input);
-    }
-
+    if (tone == Tone::NGANG) return normalizeNFC(input);
     UChar32 toneMark = combiningMarkFromTone(tone);
-
-    if (toneMark == 0) {
-        return normalizeNFC(input);
-    }
+    if (toneMark == 0) return normalizeNFC(input);
 
     UErrorCode status = U_ZERO_ERROR;
+    const icu::Normalizer2* nfd = icu::Normalizer2::getNFDInstance(status);
+    if (U_FAILURE(status)) return input;
 
-    const icu::Normalizer2* nfd =
-        icu::Normalizer2::getNFDInstance(status);
-
-    if (U_FAILURE(status)) {
-        return input;
-    }
-
-    icu::UnicodeString src = icu::UnicodeString::fromUTF8(
-        icu::StringPiece(input)
-    );
-
+    icu::UnicodeString src = icu::UnicodeString::fromUTF8(icu::StringPiece(input));
     icu::UnicodeString result;
-
     int cpIndex = 0;
 
     for (int32_t i = 0; i < src.length();) {
@@ -1012,23 +612,15 @@ std::string Syllable::applyTone(const std::string& input, Tone tone, int pos) {
         one.append(c);
 
         icu::UnicodeString decomposedOne;
-
         UErrorCode localStatus = U_ZERO_ERROR;
         nfd->normalize(one, decomposedOne, localStatus);
 
-        if (U_FAILURE(localStatus)) {
-            result.append(c);
-        } else {
-            result.append(decomposedOne);
-        }
+        if (U_FAILURE(localStatus)) result.append(c);
+        else result.append(decomposedOne);
 
-        if (cpIndex == pos) {
-            result.append(toneMark);
-        }
-
+        if (cpIndex == pos) result.append(toneMark);
         ++cpIndex;
     }
-
     return normalizeNFC(unicodeStringToUTF8(result));
 }
 
@@ -1038,18 +630,13 @@ std::string Syllable::applyTone(const std::string& input, Tone tone, int pos) {
 
 vin& vin::operator>>(Syllable& s) {
     std::string token;
-
-    if (!(is_ >> token)) {
-        return *this;
-    }
-
+    if (!(is_ >> token)) return *this;
+    
     auto parsed = Syllable::fromUTF8(token);
-
     if (!parsed) {
         is_.setstate(std::ios::failbit);
         return *this;
     }
-
     s = *parsed;
     return *this;
 }
