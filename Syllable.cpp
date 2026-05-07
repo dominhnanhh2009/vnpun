@@ -218,37 +218,33 @@ std::optional<ParsedVan> parseVanNormal(const std::string& van) {
 // ============================================================
 
 std::optional<ParsedVan> parseVanWithQPattern(const std::string& van) {
-    if (van.empty() || van == "u") {
-        return std::nullopt; // "qu" không có âm chính
+    if (van.empty()) {
+        return std::nullopt;
     }
 
-    // quốc: q + uôc
-    if (startsWith(van, "uô")) {
-        std::string right = van.substr(std::string("uô").size());
-        if (isValidFinalRaw(right)) return ParsedVan{"u", "uô", right};
+    // normalize orthographic "qu..." -> canonical "...", medial = "o"
+    //
+    // quả  -> q + ua?  -> o + a
+    // qỏa  -> q + ỏa   -> o + a
+    // quyên -> o + ia + n
+    // quốc -> o + ua + c
+
+    std::string normalized = van;
+
+    // bỏ chữ 'u' chính tả sau q nếu có
+    if (startsWith(normalized, "u")) {
+        normalized = normalized.substr(1);
     }
 
-    // quyển, quỷ, quyền...
-    if (startsWith(van, "uy")) {
-        std::string rest = van.substr(std::string("u").size());
-        for (const std::string& nucleus : NUCLEUS_CANDIDATES) {
-            if (!startsWith(rest, nucleus)) continue;
-            std::string right = rest.substr(nucleus.size());
-            if (isValidFinalRaw(right)) return ParsedVan{"u", nucleus, right};
-        }
+    auto parsed = parseVanNormal(normalized);
+    if (!parsed) {
+        return std::nullopt;
     }
 
-    // quả, quảng...
-    if (startsWith(van, "u")) {
-        std::string afterU = van.substr(std::string("u").size());
-        auto parsed = parseVanNormal(afterU);
-        if (parsed && parsed->amDem.empty()) {
-            parsed->amDem = "u";
-            return parsed;
-        }
-    }
+    // q-pattern luôn force âm đệm = o
+    parsed->amDem = "o";
 
-    return std::nullopt;
+    return parsed;
 }
 
 std::pair<std::string, std::string> splitInitialAndVan(const std::string& noTone) {
@@ -391,6 +387,7 @@ std::optional<Syllable> Syllable::fromUTF8(const std::string& input) {
 
         if (rawInitial == "q") {
             parsedVan = parseVanWithQPattern(rawVan);
+            //parsedVan=parseVanNormal(rawVan);
         } else if (rawInitial == "gi") {
             parsedVan = parseVanNormal("i" + rawVan);
             if (!parsedVan) parsedVan = parseVanNormal(rawVan);
