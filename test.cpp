@@ -133,6 +133,7 @@ int main() {
         {"yêu",   "",  "",  "ia","u",   Tone::NGANG,"yêu"},
         {"oai",   "",  "o", "a", "i",   Tone::NGANG,"oai"},
         {"uỷ",    "",  "o", "i", "",    Tone::HOI,  "uỷ"},
+        {"nguễn",    "ng",  "o", "ê", "n",    Tone::NGA,  "nguễn"},
     };
 
     int pass = 0;

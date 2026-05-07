@@ -6,4 +6,4 @@ các file mà bạn sẽ làm việc:
 %Syllable.cpp%
 
 yêu cầu:
- - implement vào file .cpp
+ - hãy sửa implement để khớp với readme.md

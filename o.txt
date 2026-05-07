@@ -76,6 +76,8 @@ running oai
 [ OK ] oai -> oai
 running uỷ
 [ OK ] uỷ -> uỷ
+running nguễn
+[ OK ] nguễn -> nguễn
 
 ==== RESULT ====
-Passed: 39 / 39
+Passed: 40 / 40

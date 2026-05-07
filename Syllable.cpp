@@ -324,17 +324,17 @@ OrthographicSegments buildOrthographicSegmentsFromNormalized(
         }
     }
 
-    // 4. i -> y ở âm chính
+    // 4. Fix âm đệm o -> u nếu âm chính bắt đầu i/ê
+    if (seg.medial == "o" && (startsWith(seg.nucleus, "i") || startsWith(seg.nucleus, "ê"))) {
+        seg.medial = "u";
+    }
+
+    // 5. i -> y ở âm chính
     if (seg.initial.empty() || !seg.medial.empty()) {
         if (seg.nucleus == "i") seg.nucleus = "y";
         else if (startsWith(seg.nucleus, "i")) {
             seg.nucleus = "y" + seg.nucleus.substr(std::string("i").size());
         }
-    }
-
-    // 5. Fix âm đệm o -> u nếu âm chính bắt đầu i/y
-    if (seg.medial == "o" && (startsWith(seg.nucleus, "i") || startsWith(seg.nucleus, "y"))) {
-        seg.medial = "u";
     }
 
     return seg;
